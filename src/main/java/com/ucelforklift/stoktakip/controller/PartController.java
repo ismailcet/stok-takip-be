@@ -40,13 +40,13 @@ public class PartController {
     }
 
     @PostMapping
-    @PreAuthorize("hasRole('MASTER')")
+    @PreAuthorize("hasAnyRole('MASTER','ADMIN')")
     public PartResponse create(@Valid @RequestBody CreatePartRequest request) {
         return partService.create(request);
     }
 
     @PatchMapping("/{id}")
-    @PreAuthorize("hasRole('MASTER')")
+    @PreAuthorize("hasAnyRole('MASTER','ADMIN')")
     public PartResponse update(@PathVariable Long id, @Valid @RequestBody UpdatePartRequest request) {
         return partService.update(id, request);
     }

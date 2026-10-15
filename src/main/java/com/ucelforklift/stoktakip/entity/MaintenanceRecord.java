@@ -32,7 +32,6 @@ public class MaintenanceRecord {
     @JoinColumn(name = "recorded_by_user_id", nullable = false)
     private User recordedByUser;
 
-    @Lob
     @Column(name = "work_order_photo", nullable = false, columnDefinition = "bytea")
     private byte[] workOrderPhoto;
 

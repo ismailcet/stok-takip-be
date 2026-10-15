@@ -25,19 +25,19 @@ public class CabinetController {
     }
 
     @PostMapping
-    @PreAuthorize("hasRole('MASTER')")
+    @PreAuthorize("hasRole('ADMIN')")
     public CabinetResponse create(@Valid @RequestBody CreateCabinetRequest request) {
         return cabinetService.create(request);
     }
 
     @PatchMapping("/{id}")
-    @PreAuthorize("hasRole('MASTER')")
+    @PreAuthorize("hasRole('ADMIN')")
     public CabinetResponse rename(@PathVariable Long id, @Valid @RequestBody CreateCabinetRequest request) {
         return cabinetService.rename(id, request);
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('MASTER')")
+    @PreAuthorize("hasRole('ADMIN')")
     public void delete(@PathVariable Long id) {
         cabinetService.delete(id);
     }

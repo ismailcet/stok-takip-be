@@ -25,7 +25,7 @@ public class UserController {
     }
 
     @PostMapping
-    @PreAuthorize("hasRole('MASTER')")
+    @PreAuthorize("hasRole('ADMIN')")
     public UserSummary create(@Valid @RequestBody CreateUserRequest request) {
         return userService.create(request);
     }
@@ -36,7 +36,7 @@ public class UserController {
     }
 
     @PatchMapping("/{id}/pin")
-    @PreAuthorize("hasRole('MASTER')")
+    @PreAuthorize("hasRole('ADMIN')")
     public void resetPin(@PathVariable Long id, @Valid @RequestBody ResetPinRequest request) {
         userService.resetPin(id, request);
     }
