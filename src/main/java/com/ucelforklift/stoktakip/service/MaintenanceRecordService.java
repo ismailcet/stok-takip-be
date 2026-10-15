@@ -77,10 +77,15 @@ public class MaintenanceRecordService {
     }
 
     private MaintenanceRecordResponse toResponse(MaintenanceRecord r) {
+        Company c = r.getCompany();
         return new MaintenanceRecordResponse(
                 r.getId(),
-                r.getCompany().getId(),
-                r.getCompany().getName(),
+                c.getId(),
+                c.getName(),
+                c.getAddress(),
+                c.getTaxOffice(),
+                c.getTaxNumber(),
+                c.getPhone(),
                 r.getVisitDate(),
                 r.getRecordedByUser().getId(),
                 r.getRecordedByUser().getFullName(),
