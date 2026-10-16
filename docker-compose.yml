@@ -1,0 +1,38 @@
+services:
+  db:
+    image: postgres:16
+    container_name: stok-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: stok_takip
+      POSTGRES_USER: ${DB_USERNAME}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME} -d stok_takip"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build: .
+    container_name: stok-backend
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DB_URL: jdbc:postgresql://db:5432/stok_takip
+      DB_USERNAME: ${DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET}
+      SPRING_JPA_SHOW_SQL: "false"
+      SPRINGDOC_API_DOCS_ENABLED: "false"
+      SPRINGDOC_SWAGGER_UI_ENABLED: "false"
+      TZ: Europe/Istanbul
+    ports:
+      - "127.0.0.1:8080:8080"
+
+volumes:
+  pgdata:
