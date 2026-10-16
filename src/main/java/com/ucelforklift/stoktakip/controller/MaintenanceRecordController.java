@@ -22,8 +22,12 @@ public class MaintenanceRecordController {
     }
 
     @GetMapping
-    public List<MaintenanceRecordResponse> list(@RequestParam(required = false) Long companyId) {
-        return maintenanceRecordService.list(companyId);
+    public List<MaintenanceRecordResponse> list(
+            @RequestParam(required = false) Long companyId,
+            @RequestParam(required = false) String q,
+            @RequestParam(required = false) LocalDate dateFrom,
+            @RequestParam(required = false) LocalDate dateTo) {
+        return maintenanceRecordService.list(companyId, q, dateFrom, dateTo);
     }
 
     @GetMapping("/{id}")

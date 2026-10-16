@@ -3,6 +3,7 @@ package com.ucelforklift.stoktakip.controller;
 import com.ucelforklift.stoktakip.dto.*;
 import com.ucelforklift.stoktakip.service.UserService;
 import jakarta.validation.Valid;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
@@ -35,9 +36,24 @@ public class UserController {
         userService.changeOwnPin((Long) authentication.getPrincipal(), request);
     }
 
+    @PatchMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public UserSummary update(Authentication authentication,
+                              @PathVariable Long id,
+                              @Valid @RequestBody UpdateUserRequest request) {
+        return userService.update((Long) authentication.getPrincipal(), id, request);
+    }
+
     @PatchMapping("/{id}/pin")
     @PreAuthorize("hasRole('ADMIN')")
     public void resetPin(@PathVariable Long id, @Valid @RequestBody ResetPinRequest request) {
         userService.resetPin(id, request);
+    }
+
+    @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Void> delete(Authentication authentication, @PathVariable Long id) {
+        userService.delete((Long) authentication.getPrincipal(), id);
+        return ResponseEntity.noContent().build();
     }
 }

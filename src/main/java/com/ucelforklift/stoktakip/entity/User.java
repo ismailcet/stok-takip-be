@@ -28,6 +28,10 @@ public class User {
     @Column(name = "pin_hash", nullable = false)
     private String pinHash;
 
+    /** false = silinmiş sayılır; listelerde görünmez, giriş yapamaz. */
+    @Column(nullable = false)
+    private boolean active = true;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
 }

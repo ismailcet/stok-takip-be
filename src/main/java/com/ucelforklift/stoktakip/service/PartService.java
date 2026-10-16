@@ -1,5 +1,6 @@
 package com.ucelforklift.stoktakip.service;
 
+import com.ucelforklift.stoktakip.config.CacheNames;
 import com.ucelforklift.stoktakip.dto.CreatePartRequest;
 import com.ucelforklift.stoktakip.dto.PartResponse;
 import com.ucelforklift.stoktakip.dto.UpdatePartRequest;
@@ -8,10 +9,13 @@ import com.ucelforklift.stoktakip.entity.Part;
 import com.ucelforklift.stoktakip.repository.CabinetRepository;
 import com.ucelforklift.stoktakip.repository.PartRepository;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.util.Comparator;
 import java.util.List;
 
 @Service
@@ -30,10 +34,23 @@ public class PartService {
         this.lowStockThreshold = lowStockThreshold;
     }
 
+    // Anahtar: (kucuk harfli arama metni | dusuk stok filtresi). Ekleme/guncellemede tamami temizlenir.
+    @Cacheable(cacheNames = CacheNames.PARTS,
+            key = "(#search == null ? '' : #search.trim().toLowerCase()) + '|' + #lowStockOnly")
     public List<PartResponse> list(String search, boolean lowStockOnly) {
-        List<Part> parts = (search == null || search.isBlank())
-                ? partRepository.findAll()
-                : partRepository.findByNameContainingIgnoreCaseOrBarcodeContainingIgnoreCase(search, search);
+        List<Part> parts;
+        if (search == null || search.isBlank()) {
+            parts = partRepository.findAll();
+        } else {
+            String q = search.trim();
+            parts = partRepository.search(escapeLike(q)).stream()
+                    // once kod/barkod tam eslesenler, sonra isme gore
+                    .sorted(Comparator
+                            .comparingInt((Part p) -> isExactCodeMatch(p, q) ? 0 : 1)
+                            .thenComparing(p -> p.getName() == null ? "" : p.getName(),
+                                    String.CASE_INSENSITIVE_ORDER))
+                    .toList();
+        }
 
         return parts.stream()
                 .filter(p -> !lowStockOnly || p.getStockQuantity() <= lowStockThreshold)
@@ -59,6 +76,7 @@ public class PartService {
         return toResponse(part);
     }
 
+    @CacheEvict(cacheNames = CacheNames.PARTS, allEntries = true)
     public PartResponse create(CreatePartRequest request) {
         if (isBlank(request.barcode()) && isBlank(request.productCode())) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Barkod veya urun kodundan biri girilmeli");
@@ -79,6 +97,7 @@ public class PartService {
         return toResponse(partRepository.save(part));
     }
 
+    @CacheEvict(cacheNames = CacheNames.PARTS, allEntries = true)
     public PartResponse update(Long id, UpdatePartRequest request) {
         Part part = findPartOrThrow(id);
 
@@ -95,6 +114,18 @@ public class PartService {
     private Part findPartOrThrow(Long id) {
         return partRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Parca bulunamadi"));
+    }
+
+    private boolean isExactCodeMatch(Part p, String q) {
+        return q.equalsIgnoreCase(p.getBarcode()) || q.equalsIgnoreCase(p.getProductCode());
+    }
+
+    /** LIKE ozel karakterlerini (\, %, _) kacislar; aksi halde "_" her karakterle eslesirdi. */
+    private String escapeLike(String value) {
+        return value
+                .replace("\\", "\\\\")
+                .replace("%", "\\%")
+                .replace("_", "\\_");
     }
 
     private boolean isBlank(String value) {

@@ -28,6 +28,7 @@ public class AuthController {
     @PostMapping("/login")
     public LoginResponse login(@Valid @RequestBody LoginRequest request) {
         User user = userRepository.findById(request.userId())
+                .filter(User::isActive)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Kullanici bulunamadi"));
 
         if (!passwordEncoder.matches(request.pin(), user.getPinHash())) {

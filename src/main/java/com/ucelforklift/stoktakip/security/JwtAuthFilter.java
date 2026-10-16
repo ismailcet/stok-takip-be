@@ -20,9 +20,11 @@ import java.util.List;
 public class JwtAuthFilter extends OncePerRequestFilter {
 
     private final JwtService jwtService;
+    private final AuthUserService authUserService;
 
-    public JwtAuthFilter(JwtService jwtService) {
+    public JwtAuthFilter(JwtService jwtService, AuthUserService authUserService) {
         this.jwtService = jwtService;
+        this.authUserService = authUserService;
     }
 
     @Override
@@ -36,11 +38,15 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             try {
                 Claims claims = jwtService.parseClaims(header.substring(7));
                 Long userId = Long.valueOf(claims.getSubject());
-                String role = claims.get("role", String.class);
 
-                var authorities = List.of(new SimpleGrantedAuthority("ROLE_" + role));
-                var authentication = new UsernamePasswordAuthenticationToken(userId, null, authorities);
-                SecurityContextHolder.getContext().setAuthentication(authentication);
+                // Silinmis (pasif) kullanicinin token'i gecerli olsa bile kimlik kurulmaz.
+                // Rol veritabanindan okunur (onbellekli, degisiklikte temizlenir).
+                var authUser = authUserService.findActive(userId);
+                if (authUser != null) {
+                    var authorities = List.of(new SimpleGrantedAuthority("ROLE_" + authUser.role().name()));
+                    var authentication = new UsernamePasswordAuthenticationToken(authUser.id(), null, authorities);
+                    SecurityContextHolder.getContext().setAuthentication(authentication);
+                }
             } catch (JwtException | IllegalArgumentException ignored) {
                 // gecersiz/suresi gecmis token -> istek kimliksiz devam eder, asagida engellenir
             }
