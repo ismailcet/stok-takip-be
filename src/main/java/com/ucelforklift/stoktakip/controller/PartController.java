@@ -50,4 +50,10 @@ public class PartController {
     public PartResponse update(@PathVariable Long id, @Valid @RequestBody UpdatePartRequest request) {
         return partService.update(id, request);
     }
+
+    @DeleteMapping("/{id}")
+    @PreAuthorize("hasAnyRole('MASTER','ADMIN')")
+    public void delete(@PathVariable Long id) {
+        partService.delete(id);
+    }
 }

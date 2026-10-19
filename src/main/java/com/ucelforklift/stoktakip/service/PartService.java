@@ -149,4 +149,10 @@ public class PartService {
                 part.getStockQuantity()
         );
     }
+
+    @CacheEvict(cacheNames = CacheNames.PARTS, allEntries = true)
+    public void delete(Long id) {
+        Part part = findPartOrThrow(id);
+        partRepository.delete(part);
+    }
 }
